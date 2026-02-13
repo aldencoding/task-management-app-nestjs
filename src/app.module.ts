@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TasksController } from './tasks/tasks.controller';
 import { TasksModule } from './tasks/tasks.module';
 import { TasksService } from './tasks/tasks.service';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TasksService } from './tasks/tasks.service';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CategoryModule,
   ],
   controllers: [AppController, TasksController],
   providers: [AppService, PrismaService, TasksService],

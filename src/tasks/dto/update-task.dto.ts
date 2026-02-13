@@ -16,5 +16,5 @@ export class UpdateTaskDto {
     message:
       'status harus berupa salah satu dari: PENDING, IN_PROGRESS, COMPLETED',
   })
-  readonly status: string;
+  readonly status: Status;
 }

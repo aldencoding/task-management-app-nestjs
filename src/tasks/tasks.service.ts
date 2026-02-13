@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { Status } from '@prisma/client';
+import { Role, Status } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
@@ -14,7 +14,11 @@ export class TasksService {
   async getTaskById(paramId: string) {
     const task = await this.prismaService.task.findUnique({
       where: { id: parseInt(paramId) },
-      select: { title: true, author: { select: { user_name: true } } },
+      select: {
+        title: true,
+        author: { select: { user_name: true } },
+        category: { select: { id: true, name: true } },
+      },
     });
 
     if (!task) {
@@ -25,11 +29,21 @@ export class TasksService {
 
     return task;
   }
+
   async createTask(dto: CreateTaskDto) {
+    const findCategory = await this.prismaService.category.findUnique({
+      where: { id: dto.category_id },
+    });
+    if (!findCategory) {
+      throw new NotFoundException(
+        `Category dengan ID ${dto.category_id} tidak ditemukan!`,
+      );
+    }
     return await this.prismaService.task.create({
       data: {
         title: dto.title,
         description: dto.description,
+        category: { connect: { id: dto.category_id } },
         author: {
           connect: { id: dto.user_id },
         },
@@ -37,25 +51,37 @@ export class TasksService {
       include: { author: true },
     });
   }
-  async updateTask(paramId: number, dto: UpdateTaskDto) {
+
+  async updateTask(paramId: number, dto: UpdateTaskDto, user: any) {
+    let dataUpdate = {};
+    //mengecek apakah ada task yang dicari
+    const findTask = await this.prismaService.task.findUnique({
+      where: { id: paramId },
+    });
+    if (!findTask) {
+      throw new NotFoundException(`Task dengan ID ${paramId} tidak ditemukan!`);
+    }
+
     // cek apakah status completed
-    let finished_at: Date | null | undefined = undefined;
+    let finished_at: Date | null = null;
     if (dto.status) {
       if (dto.status === Status.COMPLETED) {
         finished_at = new Date();
       }
     }
 
+    //memastikan hanya user tertentu yang bisa update
+    if (user.role === Role.STUDENT) {
+      dataUpdate = { status: dto.status };
+    } else if (user.role === Role.TEACHER) {
+      dataUpdate = { ...dto };
+    }
     return await this.prismaService.task.update({
       where: { id: paramId },
-      data: {
-        title: dto.title,
-        description: dto.description,
-        status: dto.status as Status,
-        finished_at: finished_at,
-      },
+      data: { ...dataUpdate, finished_at },
     });
   }
+
   async deleteTask(paramId: number) {
     const task = await this.prismaService.task.findUnique({
       where: { id: paramId },

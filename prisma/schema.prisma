@@ -14,8 +14,8 @@ datasource db {
 }
 
 enum Role {
-  MANAGER
-  EMPLOYEE
+  TEACHER
+  STUDENT
 }
 
 enum Status {
@@ -29,7 +29,7 @@ model User {
   user_name       String
   email           String   @unique
   password        String
-  role            Role     @default(EMPLOYEE)
+  role            Role
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
   authored_tasks  Task[]   @relation("TaskAuthor")
@@ -39,14 +39,22 @@ model User {
 model Task {
   id          Int       @id @default(autoincrement())
   title       String
-  description String?
+  description String
   status      Status    @default(PENDING)
   finished_at DateTime?
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
 
-  author          User  @relation("TaskAuthor", fields: [author_id], references: [id])
-  completed_by    User? @relation("TaskCompleter", fields: [completed_by_id], references: [id])
+  author          User      @relation("TaskAuthor", fields: [author_id], references: [id])
+  completed_by    User?     @relation("TaskCompleter", fields: [completed_by_id], references: [id])
+  category        Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
   author_id       Int
   completed_by_id Int?
+  category_id     Int?
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String
+  tasks Task[]
 }

@@ -8,6 +8,6 @@ export class LoginDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(8, { message: 'Password terlalu pendek' })
+  @MinLength(3, { message: 'Password terlalu pendek' })
   readonly password: string;
 }

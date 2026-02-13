@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
+import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -17,7 +17,6 @@ export class AuthService {
   ) {}
   async register(dto: RegisterDto) {
     //1. cek apakah ada email yang sudah pernah dibuat
-    //2. password di bycrpt
     const findUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -26,6 +25,7 @@ export class AuthService {
       throw new BadRequestException('Email sudah terdaftar!');
     }
 
+    //2. password di bycrpt
     const hashPassword = await bcrypt.hash(dto.password, 10);
 
     const createUser = await this.prisma.user.create({
@@ -33,16 +33,17 @@ export class AuthService {
         user_name: dto.username,
         email: dto.email,
         password: hashPassword,
+        role: dto.role,
       },
     });
 
+    // property password tidak diikut sertakan dalam return
     const { password, ...result } = createUser;
     return result;
   }
 
   async login(dto: LoginDto) {
     //1. cek apakah email
-    //2. password di bycrpt
     const findUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -51,6 +52,7 @@ export class AuthService {
       throw new UnauthorizedException('invalid crentials');
     }
 
+    //2. password dari DB di compare dengan password dari DTO
     const passwordCheck = await bcrypt.compare(
       dto.password,
       findUser?.password,
