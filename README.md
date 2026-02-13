@@ -1,98 +1,130 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Task Management App (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Aplikasi pengelolaan tugas siswa berbasis RESTful API menggunakan **NestJS** dan **MySQL**. Dirancang untuk memisahkan hak akses antara **Guru (TEACHER)** dan **Murid (STUDENT)**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Guru dapat mengelola kategori dan tugas secara penuh, sementara murid hanya dapat memperbarui status tugas miliknya sendiri.
 
-## Description
+Saya menggunakan pendekatan Modular dan Layered Architecture karena merupakan pendekatan standar yang direkomendasikan oleh NestJS. Pendekatan ini memisahkan tanggung jawab antara controller, service, dan data access sehingga kode lebih mudah dipahami, diuji, dan dikembangkan tanpa over-engineering.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Fitur Utama
+- **Autentikasi JWT**:
+  - Registrasi pengguna baru (`POST /auth/register`)
+  - Login dan mendapatkan token (`POST /auth/login`)
+- **Manajemen Category** (hanya TEACHER):
+  - CRUD lengkap kategori tugas (contoh: Matematika, IPA, Bahasa)
+- **Manajemen Task / Tugas**:
+  - TEACHER: Full CRUD (buat, baca, update semua field, hapus)
+  - STUDENT: Hanya update status tugas (`PATCH /task/:id` – hanya field `status`)
+- Role-based Access Control (RBAC) sederhana
+- Status tugas: `PENDING`, `IN_PROGRESS`, `COMPLETED`
 
-## Project setup
+## Tech Stack
+- **Framework**: NestJS (TypeScript)
+- **Database**: MySQL
+- **ORM**: Prisma
+- **Authentication**: JWT (Bearer Token)
+- **Validasi**: class-validator + class-transformer
+- **Linting & Formatting**: ESLint + Prettier
+- **Testing**: Jest (unit & e2e)
 
-```bash
-$ npm install
+## Prasyarat
+- Node.js ≥ 18
+- npm ≥ 9
+- MySQL server 
+
+## Instalasi & Setup
+1. Clone repository
+   ```bash
+   git clone https://github.com/aldencoding/task-management-app-nestjs.git
+   cd task-management-app-nestjs
+
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+
+3. Setup environment
+   Salin file contoh:
+   ```bash
+   cp .env.example .env
+   ```
+   Kemudian isi file `.env` dengan konfigurasi Anda:
+   ```
+   DATABASE_URL="mysql://user:password@localhost:3306/task_management_db"
+   JWT_SECRET=your-very-long-random-secret-key-here
+   PORT=3000
+   ```
+
+4. Generate Prisma client & migrasi database
+   ```bash
+   npx prisma generate
+   npx prisma migrate dev --name init
+   ```
+
+   (Jika ingin seed data awal: `npx prisma db seed` – jika sudah ada script seed)
+
+5. Jalankan aplikasi (development mode)
+   ```bash
+   npm run start:dev
+   ```
+
+   Server akan berjalan di: `http://localhost:3000`
+
+   (Gunakan `npm run start:prod` untuk production)
+
+## Struktur Folder Utama
+
+```
+task-management-app-nestjs/
+├── prisma/                 # Schema Prisma & migrasi
+├── src/
+│   ├── auth/               # Module autentikasi (register, login, guard)
+│   ├── tasks/              # Module tugas
+│   ├── category/         #   Module kategori
+│   ├── users/              # Module user & role
+│   ├── common/             # Filter, interceptor, dto, dll
+│   └── main.ts
+├── test/                   # Tes unit & e2e
+├── .env.example
+├── nest-cli.json
+├── package.json
+└── README.md
 ```
 
-## Compile and run the project
+## Endpoint Utama
 
-```bash
-# development
-$ npm run start
+### Auth
+- `POST /auth/register` → Daftar akun baru (username, email, password, role)
+- `POST /auth/login`    → Login & dapatkan JWT token
 
-# watch mode
-$ npm run start:dev
+### Categories (hanya TEACHER)
+- `GET    /category`
+- `POST   /category`
+- `PATCH  /category/:id`
+- `DELETE /category/:id`
 
-# production mode
-$ npm run start:prod
-```
+### Tasks
+- `GET    /task`               → Daftar tugas 
+- `GET    /task/:id`
+- `POST   /task`               → Buat tugas (TEACHER)
+- `PATCH  /task/:id`           → Update tugas (TEACHER full | STUDENT hanya status)
+- `DELETE /task/:id`           → Hapus tugas (TEACHER)
 
-## Run tests
+## Dokumentasi API
 
-```bash
-# unit tests
-$ npm run test
+- Import file **Postman Collection** (jika sudah ada di repo: `Student Task Manager App.postman_collection.json`) ke Postman Anda.
+- Atau akses Swagger (jika sudah diaktifkan): `http://localhost:3000/` (setelah `npm run start:dev`)
 
-# e2e tests
-$ npm run test:e2e
+## Cara Kontribusi
 
-# test coverage
-$ npm run test:cov
-```
+1. Fork repository ini
+2. Buat branch baru: `git checkout -b fitur/nama-fitur`
+3. Commit perubahan Anda
+4. Push ke branch: `git push origin fitur/nama-fitur`
+5. Buat Pull Request
 
-## Deployment
+## Lisensi
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+[MIT License](LICENSE) – Bebas digunakan, dimodifikasi, dan didistribusikan.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Dibuat dengan ❤️ oleh [Alden](https://github.com/aldencoding) – Bekasi, 2026
