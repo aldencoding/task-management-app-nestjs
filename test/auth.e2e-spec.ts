@@ -29,6 +29,7 @@ describe('Auth E2E', () => {
         username: 'testuser',
         email: 'test@mail.com',
         password: '1234567890',
+        role: 'TEACHER',
       })
       .expect(201);
   });
